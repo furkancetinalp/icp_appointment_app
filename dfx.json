@@ -1,0 +1,27 @@
+{
+  "canisters": {
+    "appointment_backend": {
+      "candid": "src/appointment_backend/appointment_backend.did",
+      "package": "appointment_backend",
+      "type": "rust"
+    },
+    "appointment_frontend": {
+      "dependencies": [
+        "appointment_backend"
+      ],
+      "source": [
+        "src/appointment_frontend/dist"
+      ],
+      "type": "assets",
+      "workspace": "appointment_frontend"
+    }
+  },
+  "defaults": {
+    "build": {
+      "args": "",
+      "packtool": ""
+    }
+  },
+  "output_env_file": ".env",
+  "version": 1
+}
