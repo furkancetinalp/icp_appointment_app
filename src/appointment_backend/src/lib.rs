@@ -10,6 +10,7 @@ use uuid::Uuid;
 struct Appointment {
     name: String,
     mail: String,
+    month:u8,
     day: u8,
     hour: u8,
 }
@@ -45,15 +46,25 @@ thread_local! {
 //UPDATE
 #[ic_cdk_macros::update]
 fn create_appointment( appointment:Appointment) ->bool{
-    let len = APPOINTMENT_MAP.with(|p| p.borrow().len());
-    let data = Appointment{
-        name:appointment.name,
-        mail:appointment.mail,
-        day:appointment.day,
-        hour:appointment.hour,
-    };
-    APPOINTMENT_MAP.with(|p| p.borrow_mut().insert(len,data));
-    return true;
+    let if_already_exists = get_appointment_by_mail(appointment.mail.clone());
+    match if_already_exists {
+        Some(data) => {
+            return false;
+        },
+        None => {
+            let len = APPOINTMENT_MAP.with(|p| p.borrow().len());
+            let data = Appointment{
+                name:appointment.name,
+                mail:appointment.mail,
+                day:appointment.day,
+                hour:appointment.hour,
+                month:appointment.month
+            };
+            APPOINTMENT_MAP.with(|p| p.borrow_mut().insert(len,data));
+            return true;
+        }
+    }
+ 
 }
 #[ic_cdk_macros::update]
 fn delete_appointment(mail:String) ->bool{
@@ -65,9 +76,14 @@ fn delete_appointment(mail:String) ->bool{
 //GET
 
 #[ic_cdk_macros::query]
-fn get_appointment_by_mail(mail:String) ->Appointment{
-    let x  = APPOINTMENT_MAP.with(|p| p.borrow().iter().find(|x| x.1.mail==mail )).clone().unwrap();
-    return x.1;
+fn get_appointment_by_mail(mail:String) ->Option<Appointment>{
+    if let Some(x) = APPOINTMENT_MAP.with(|p| p.borrow().iter().find(|x| x.1.mail==mail )).clone(){
+        return Some(x.1);
+    }
+    else{
+        return None;
+    }
+
 }
 
 

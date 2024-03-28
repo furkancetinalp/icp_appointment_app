@@ -4,13 +4,13 @@ import React from "react";
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import { Formik, useFormik } from 'formik';
-import { Flex, Box, Heading, FormControl, FormLabel, Input, Button, Alert, AlertIcon,AlertTitle,AlertDescription,useToast} from "@chakra-ui/react";
-
+import { Flex, Box, Heading, FormControl, FormLabel, Input, Button, Alert,useToast} from "@chakra-ui/react";
+import validations from './validations';
+import emailvalidation from './emailvalidation';
 function App() {
   const [num, setNum] = useState(-1)
   const data = [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24];
   const [value, setValue] = useState(new Date());
-  const [showHours,setShowHours] = useState(false);
   const [selected,setSelected] = useState([]);
   function onChange(nextValue){
     setValue(nextValue);
@@ -22,21 +22,15 @@ function App() {
           .then(data => ReservedHours(data))
           .then(data => setVeri(data))
           .catch(err => console.error("Custom err: ", err));
-    console.log("selected",selected);
   },[value])
 
   function ReservedHours(data){
     var sec = [];
-    console.log("ReservedHoursa girdi",data[0]);
     data[0]?.map(item => {
-      console.log(item["hour"])
       sec.push(item["hour"])
     })
     setSelected(sec);
   }
-  console.log("selected hours",selected);
-  console.log("value",value);
-  console.log("value.getdate",value.getDate());
   function onChange(nextValue){
     setValue(nextValue);
   }
@@ -52,12 +46,14 @@ function App() {
       email: "",
       name: "",
     },
+    validationSchema:validations,
     
     onSubmit: (values, bag) => {
       try {
         let model = {
           name:values.name,
           mail:values.email,
+          month:value.getMonth()+1,
           day:value.getDate(),
           hour:num
         };
@@ -78,8 +74,34 @@ function App() {
             setSelected([...selected,num]);
           }
           else{
-            addToast("error","An error is occurred");
+            addToast("error","There is a reservation for this email!");
              ResponseMessage("error");
+          }
+        });
+      }
+      catch (error) {
+        ResponseMessage("error");
+        console.log("an error occurred!!!");
+      }
+    }
+  })
+
+  const checkRezervationFormik = useFormik({
+    initialValues: {
+      email: "",
+    },
+    validationSchema:emailvalidation,
+    onSubmit: (values, bag) => {
+      try {
+       
+        appointment_backend.get_appointment_by_mail(values.email).then((appoints) => {
+          console.log("gonderim sonucu",appoints);
+          if(appoints.length >0){
+            addToast("success",`Reserved for ${appoints[0]["day"]}/${appoints[0]["month"]}/2024 at ${appoints[0]["hour"]}:00`);
+
+          }
+          else{
+            addToast("error","No reservations found!!!");
           }
         });
       }
@@ -119,7 +141,6 @@ function App() {
       <Calendar
           onChange={onChange}
           value={value}
-          onClickDay={() => setShowHours(true)}
       />
       </div>
       <div>{
@@ -134,10 +155,32 @@ function App() {
         </div>
       }</div>
     </div>
-<Flex align='center' width='full' justifyContent='center'>
-        <Box pt='10'>
+     <div >
+     <Flex align='center' width='350px'  float='left' ml='150px' mt={100}>
+        <Box>
+        <Box Box textAlign='center'  mb='5'>
+            <Heading>Check My Status</Heading>
+        </Box>
+        <Box my={5} textAlign='left' >
+            <form onSubmit={checkRezervationFormik.handleSubmit}>
+              <FormControl>
+                <FormLabel>Email</FormLabel>
+                <Input name='email' onChange={checkRezervationFormik.handleChange} onBlur={checkRezervationFormik.handleBlur}
+                  type='email'
+                  value={checkRezervationFormik.values.email}
+                  isInvalid={checkRezervationFormik.touched.email && checkRezervationFormik.errors.email}
+                ></Input>
+              </FormControl>
+              <Button type='submit' mt='4' width='full' colorScheme='orange'>Check Reservation</Button>
+            </form>
+          </Box>
+        </Box>
+      </Flex> 
+
+     <Flex align='center' width='350px' justifyContent='end' mr='350px'  float='right'>
+        <Box pt='5'>
           <Box textAlign='center'>
-            <Heading>Make an Appointment</Heading>
+            <Heading>Create Appointment</Heading>
           </Box>
           <Box my='5'>
             {formik.errors.general && (
@@ -149,6 +192,7 @@ function App() {
               <FormControl>
                 <FormLabel>Email</FormLabel>
                 <Input name='email' onChange={formik.handleChange} onBlur={formik.handleBlur}
+                  type='email'
                   value={formik.values.email}
                   isInvalid={formik.touched.email && formik.errors.email}
                 ></Input>
@@ -162,11 +206,17 @@ function App() {
 
                 ></Input>
               </FormControl>
-              <Button type='submit' mt='4' width='full'>Create</Button>
+              <Button type='submit' mt='4' width='full' colorScheme='green'>Create</Button>
             </form>
           </Box>
         </Box>
-      </Flex>    </>
+      </Flex>  
+
+       
+     </div>
+      
+     
+       </>
   );
 }
 
@@ -176,3 +226,4 @@ export default App;
 //npm i react-calendar
 //npm install formik
 //npm i @chakra-ui/react @emotion/react @emotion/styled framer-motion
+// npm i formik yup

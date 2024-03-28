@@ -4,16 +4,13 @@ type Appointment=
     mail:text;
     day:nat8;
     hour:nat8;
+    month:nat8;
+    
 }
-
-
-
-
-
 
 service : {
     "create_appointment": (appointment:Appointment) -> (bool);
-    "get_appointment_by_mail" :(mail:text) -> (Appointment);
+    "get_appointment_by_mail" :(mail:text) -> (opt Appointment);
     "delete_appointment" :(mail:text) -> (bool);
     "get_all_appointments": ()  -> ( opt vec Appointment) query;
     "get_appointment_by_day_and_hour":(day:nat8,hour:nat8) -> (opt Appointment);
